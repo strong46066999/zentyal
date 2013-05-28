@@ -12,9 +12,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-# XXX enable InnoDB engine
-
 use strict;
 use warnings;
 
@@ -146,7 +143,10 @@ sub restoreChain
     if (not $full) {
         throw EBox::Exceptions::Internal("Backup chain has not any backup");
     }
-
+    my $innoDB = _innoDBInBackups($full, @incrementals);
+    if ($innoDB) {
+        _enableInnoDB();
+    }
 
     if (@incrementals) {
         _prepareIncrementalBackups($full, @incrementals);
@@ -203,6 +203,29 @@ sub _restoreFullBackup
                     );
 }
 
+
+sub _innoDBInBackups
+{
+    my (@backups) = @_;
+    my $innoDB = 0;
+    foreach my $dir (@backups) {
+        my $cnfFile = "$dir/backup-my.cnf";
+        EBox::Sudo::silentRoot("grep '^innodb' $cnfFile");
+        $innoDB = ($? == 0);
+
+        last if $innoDB;
+    }
+
+    return $innoDB;
+}
+
+sub _enableInnoDB
+{
+    my $confFile = ' /etc/mysql/conf.d/zentyal.cnf';
+    EBox::Sudo::root(
+        "sed -i 's/innodb = off/innodb = on/' $confFile",
+       );
+}
 
 sub _baseCmd
 {
