@@ -2146,10 +2146,10 @@ sub _generateResolvconfConfig
     foreach my $iface (@{$ifaces}) {
         next unless $self->ifaceMethod($iface) eq 'dhcp';
 
-        $iface = "$iface.dhclient";
-        next if grep (/$iface/, @{$interfaces});
+        my $resolvIface = "$iface.dhclient";
+        next if grep (/$resolvIface/, @{$interfaces});
 
-        push (@{$interfaces}, $iface);
+        push (@{$interfaces}, $resolvIface);
     }
 
     my $array = [];
